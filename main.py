@@ -47,8 +47,16 @@ def main():
     messages = [
         types.Content(role="user", parts=[types.Part(text=user_prompt)]),
     ]
-
-    generate_content(client, messages, verbose)
+    
+    for i in range(0, 20):
+        try:
+            result = generate_content(client, messages, verbose)
+            if result:
+                print("Final response:")
+                print(result)
+                break
+        except Exception as e:
+            print(f"Error occurred: {e}")
 
 
 def generate_content(client, messages, verbose):
@@ -59,6 +67,11 @@ def generate_content(client, messages, verbose):
             tools=[available_functions], system_instruction=system_prompt
         ),
     )
+
+    for candidate in response.candidates:
+        messages.append(candidate.content)
+
+
     if verbose:
         print("Prompt tokens:", response.usage_metadata.prompt_token_count)
         print("Response tokens:", response.usage_metadata.candidates_token_count)
@@ -89,11 +102,10 @@ def generate_content(client, messages, verbose):
                 print(result_obj)
 
         function_responses.append(function_call_result.parts[0])
-        
-
-    if not function_responses:
-        raise Exception("no function responses generated, exiting.")
-
+    
+    function_responses_message = types.Content(role="tool", parts=function_responses)
+    messages.append(function_responses_message)
+    return None
 
 if __name__ == "__main__":
     main()
